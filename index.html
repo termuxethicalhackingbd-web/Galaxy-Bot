@@ -18,8 +18,6 @@ body{
   color:#e6eef6; display:flex; justify-content:center; padding:20px; position:relative;
 }
 .app { width:100%; max-width:960px; display:grid; gap:18px; position:relative; z-index:2; }
-
-/* Header */
 .header { display:flex; align-items:center; gap:16px; margin-bottom:18px; z-index:2; }
 .brand { width:70px; height:70px; border-radius:18px; display:flex; align-items:center; justify-content:center;
   background: linear-gradient(135deg,var(--neon1),var(--neon2)); color:#0a0b0f; font-weight:900; font-size:22px;
@@ -28,16 +26,12 @@ body{
 @keyframes pulse{0%{transform:scale(1)}100%{transform:scale(1.08)}}
 .title { font-size:22px; font-weight:800; }
 .subtitle { color:var(--muted); font-size:14px; }
-
-/* Cards */
 .card { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));
   border-radius:16px; padding:20px; border:1px solid rgba(255,255,255,0.03);
   box-shadow: 0 10px 30px rgba(2,6,23,0.7); backdrop-filter: blur(6px); margin-bottom:12px;
 }
 .balanceBig { font-size:36px; font-weight:900; color:#fff; }
 .smallMuted{ color:var(--muted); font-size:13px }
-
-/* Buttons */
 .btnRow { display:flex; gap:14px; flex-wrap:wrap; margin-top:16px; }
 .btn {
   background: linear-gradient(135deg,var(--neon1),var(--neon2));
@@ -47,12 +41,8 @@ body{
 .btn:hover{ transform: translateY(-6px); box-shadow: 0 20px 50px rgba(255,106,0,0.25); }
 .btn.ghost { background:transparent; color:var(--neon1); border:1px solid rgba(255,255,255,0.04); box-shadow:none; }
 .btn.game { background: linear-gradient(135deg,#6ee7b7,#34d399); color:#052014; }
-
-/* Grids */
-.gridCards { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:14px; margin-top:14px; }
+.gridCards { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:14px; margin-top:14px; max-height:300px; overflow-y:auto; }
 @media (max-width:520px){ .gridCards{grid-template-columns:1fr} }
-
-/* Referral & Toast */
 .refBox { background:#071225; padding:12px; border-radius:12px; border:1px dashed rgba(124,77,255,0.16); cursor:pointer; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; }
 .toast { position:fixed; left:50%; transform:translateX(-50%); bottom:100px; min-width:220px; max-width:90%;
   padding:14px 16px; border-radius:14px; font-weight:800; display:none; z-index:9999;
@@ -60,7 +50,6 @@ body{
 .toast.info{ background:linear-gradient(120deg,#dbeafe,#bfdbfe); color:#022558 }
 .toast.success{ background:linear-gradient(120deg,#d1fae5,#bbf7d0); color:#064e3b }
 .toast.error{ background:linear-gradient(120deg,#fee2e2,#fecaca); color:#7f1d1d }
-
 #confettiCanvas, #particles{ position:fixed; left:0; top:0; width:100%; height:100%; pointer-events:none; z-index:1; }
 .badge { display:inline-block; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,0.04); color:var(--muted); font-weight:700; font-size:12px; }
 </style>
@@ -68,9 +57,7 @@ body{
 <body>
 <canvas id="particles"></canvas>
 <canvas id="confettiCanvas"></canvas>
-
 <div class="app">
-  <!-- Header -->
   <div class="header">
     <div class="brand">GJ</div>
     <div>
@@ -79,7 +66,6 @@ body{
     </div>
   </div>
 
-  <!-- Balance Card -->
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <div>
@@ -88,17 +74,17 @@ body{
         <div class="smallMuted" id="balanceSubtitle">Available: USDT 0.000</div>
       </div>
       <div style="text-align:right">
-        <div class="badge" id="dailyBadge">Today: 0 / ∞</div>
+        <div class="badge" id="dailyBadge">Today: 0 / 50</div>
       </div>
     </div>
     <div class="btnRow">
       <button class="btn" id="watchAdBtn">Watch Ad (+0.005 USDT)</button>
       <button class="btn game" id="playRandBtn">Play Random Game</button>
       <button class="btn ghost" id="claimRefBtn">Claim Referral</button>
+      <div class="refBox" id="refBox">https://t.me/your_bot?start=0</div>
     </div>
   </div>
 
-  <!-- Ads Grid -->
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <div><strong>Ad Slots</strong><div class="smallMuted">Tap to watch & earn</div></div>
@@ -107,7 +93,6 @@ body{
     <div class="gridCards" id="adsGrid"></div>
   </div>
 
-  <!-- Games Grid -->
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <div><strong>Mini-Games</strong><div class="smallMuted">Watch ad → get reward</div></div>
@@ -116,257 +101,89 @@ body{
     <div class="gridCards" id="gamesGrid"></div>
   </div>
 </div>
+
 <script>
-// --- Core JS
-
-const balanceDisplay = document.getElementById('balanceDisplay');
-const balanceSubtitle = document.getElementById('balanceSubtitle');
-const dailyBadge = document.getElementById('dailyBadge');
-const adsGrid = document.getElementById('adsGrid');
-const gamesGrid = document.getElementById('gamesGrid');
-const watchAdBtn = document.getElementById('watchAdBtn');
-const playRandBtn = document.getElementById('playRandBtn');
-const claimRefBtn = document.getElementById('claimRefBtn');
-const refBox = document.getElementById('refBox');
-const confettiCanvas = document.getElementById('confettiCanvas');
-const confCtx = confettiCanvas.getContext('2d');
-const music = document.getElementById('bgMusic');
-
-confettiCanvas.width = window.innerWidth;
-confettiCanvas.height = window.innerHeight;
-
-let balance = 0, dailyCount = 0, refCount = 0;
-
-// --- Toast
-function showToast(msg,type='info',time=3000){
-  let toast=document.createElement('div');
-  toast.className='toast '+type; toast.textContent=msg;
-  document.body.appendChild(toast);
-  toast.style.display='block';
-  setTimeout(()=>{toast.style.display='none'; toast.remove()},time);
-}
-
-// --- Update UI
-function updateUI(){
-  balanceDisplay.textContent = `USDT ${balance.toFixed(3)}`;
-  balanceSubtitle.textContent = `Available: USDT ${balance.toFixed(3)}`;
-  dailyBadge.textContent = `Today: ${dailyCount} / ∞`;
-  refBox.textContent = `https://t.me/your_bot?start=${refCount}`;
-  document.getElementById('refCountBadge')?.textContent=`Refs: ${refCount}`;
-}
-
-// --- Reward
-function rewardForAd(type){
-  let reward = type==='game'?0.01:0.005;
-  balance += reward;
-  dailyCount++;
-  showToast(`+${reward.toFixed(3)} USDT added!`,'success',2000);
-  updateUI();
-  launchConfetti();
-}
-
-// --- Simulate Ad
-function playAd(success,fail){
-  setTimeout(()=>{
-    Math.random()>0.05 ? success() : fail();
-  },1000 + Math.random()*2000);
-}
-
-// --- Ads Grid
-for(let i=1;i<=100;i++){
-  const el=document.createElement('div'); 
-  el.className='card'; el.style.padding='12px'; el.style.cursor='pointer';
-  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center">
-    <div><strong>Ad Slot #${i}</strong><div class="smallMuted">Tap to watch</div></div>
-    <div class="smallMuted">+0.005</div></div>`;
-  el.addEventListener('click',()=>playAd(()=>rewardForAd('adSlot'),()=>showToast('Ad failed','error')));
-  adsGrid.appendChild(el);
-}
-
-// --- Games Grid
-for(let i=1;i<=100;i++){
-  const el=document.createElement('div'); 
-  el.className='card'; el.style.padding='12px'; el.style.cursor='pointer';
-  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center">
-    <div><strong>Game ${i}</strong><div class="smallMuted">Quick play — watch ad to get reward</div></div>
-    <div><button class="btn game" style="padding:8px 10px">Play</button></div></div>`;
-  el.querySelector('button').addEventListener('click',()=>playAd(()=>rewardForAd('game'),()=>showToast('Ad failed','error')));
-  gamesGrid.appendChild(el);
-}
-
-// --- Buttons
-watchAdBtn.addEventListener('click',()=>playAd(()=>rewardForAd('adSlot'),()=>showToast('Ad failed','error')));
-playRandBtn.addEventListener('click',()=>playAd(()=>rewardForAd('game'),()=>showToast('Game failed','error')));
-claimRefBtn.addEventListener('click',()=>{
-  refCount++; balance+=0.01; updateUI(); showToast('+0.01 USDT referral bonus!','success',2000);
-});
-
-// --- Music Toggle
-const musicToggleBtn=document.createElement('button');
-musicToggleBtn.textContent="Mute/Unmute Music"; 
-musicToggleBtn.style.position="fixed";
-musicToggleBtn.style.bottom="20px"; musicToggleBtn.style.right="20px"; musicToggleBtn.style.padding="10px 14px";
-musicToggleBtn.style.borderRadius="12px"; musicToggleBtn.style.background="linear-gradient(135deg,#6ee7b7,#34d399)";
-musicToggleBtn.style.color="#052014"; musicToggleBtn.style.border="none"; musicToggleBtn.style.cursor="pointer";
-musicToggleBtn.style.zIndex=9999; 
-musicToggleBtn.onclick=()=>{music.muted=!music.muted};
-document.body.appendChild(musicToggleBtn);
-
-// --- Confetti
-function launchConfetti(){
-  const confetti=[]; 
-  for(let i=0;i<100;i++){
-    confetti.push({
-      x:Math.random()*window.innerWidth,
-      y:Math.random()*window.innerHeight,
-      dx:(Math.random()-0.5)*10,
-      dy:Math.random()*-10-2,
-      color:`hsl(${Math.random()*360},100%,50%)`,
-      size:Math.random()*6+2
-    });
-  }
-  let count=0;
-  function render(){
-    confCtx.clearRect(0,0,window.innerWidth,window.innerHeight);
-    confetti.forEach(p=>{
-      p.x+=p.dx; p.y+=p.dy+0.5;
-      confCtx.fillStyle=p.color; confCtx.fillRect(p.x,p.y,p.size,p.size);
-    });
-    count++; if(count<50) requestAnimationFrame(render);
-  }
-  render();
-}
-
-// --- Initialize UI
-updateUI();
-showToast("Galaxy Jackpot — ∞× Legendary++ Loaded!", "info", 4000);
-})();
-</script>
-<script>
-// --- Core JS (ভাগ ৩)
 (function(){
-const balanceDisplay = document.getElementById('balanceDisplay');
-const balanceSubtitle = document.getElementById('balanceSubtitle');
-const dailyBadge = document.getElementById('dailyBadge');
-const adsGrid = document.getElementById('adsGrid');
-const gamesGrid = document.getElementById('gamesGrid');
-const refBox = document.getElementById('refBox');
-const watchAdBtn = document.getElementById('watchAdBtn');
-const music = document.getElementById('bgMusic');
-const confettiCanvas = document.getElementById('confettiCanvas');
-const confCtx = confettiCanvas.getContext('2d');
-confettiCanvas.width = window.innerWidth;
-confettiCanvas.height = window.innerHeight;
+const balanceDisplay=document.getElementById('balanceDisplay');
+const balanceSubtitle=document.getElementById('balanceSubtitle');
+const dailyBadge=document.getElementById('dailyBadge');
+const adsGrid=document.getElementById('adsGrid');
+const gamesGrid=document.getElementById('gamesGrid');
+const refBox=document.getElementById('refBox');
+const watchAdBtn=document.getElementById('watchAdBtn');
+const claimRefBtn=document.getElementById('claimRefBtn');
+const confettiCanvas=document.getElementById('confettiCanvas');
+const confCtx=confettiCanvas.getContext('2d');
+const music=new Audio("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3");
+confettiCanvas.width=window.innerWidth;
+confettiCanvas.height=window.innerHeight;
 
-let balance = 0, dailyCount = 0, refCount = 0;
+let balance=0,dailyCount=0,refCount=0,dailyLimit=50;
 
-// --- Toast
 function showToast(msg,type='info',time=3000){
-  let t = document.createElement('div'); t.className='toast '+type; t.textContent=msg;
-  document.body.appendChild(t);
-  t.style.display='block';
-  setTimeout(()=>{ t.remove(); }, time);
+  let t=document.createElement('div');t.className='toast '+type;t.textContent=msg;
+  document.body.appendChild(t);t.style.display='block';
+  setTimeout(()=>t.remove(),time);
 }
 
-// --- Update UI
 function updateUI(){
-  balanceDisplay.textContent = `USDT ${balance.toFixed(3)}`;
-  balanceSubtitle.textContent = `Available: USDT ${balance.toFixed(3)}`;
-  dailyBadge.textContent = `Today: ${dailyCount} / ∞`;
-  refBox.textContent = `https://t.me/your_bot?start=${refCount}`;
-  document.getElementById('refCountBadge').textContent=`Refs: ${refCount}`;
+  balanceDisplay.textContent=`USDT ${balance.toFixed(3)}`;
+  balanceSubtitle.textContent=`Available: USDT ${balance.toFixed(3)}`;
+  dailyBadge.textContent=`Today: ${dailyCount}/${dailyLimit}`;
+  refBox.textContent=`https://t.me/your_bot?start=${refCount}`;
 }
 
-// --- Reward
 function rewardForAd(type){
-  let reward=0.005; if(type==='game') reward=0.01;
-  balance += reward; dailyCount++;
-  showToast(`+${reward.toFixed(3)} USDT added!`, 'success', 2000);
-  updateUI();
-  launchConfetti();
+  if(dailyCount>=dailyLimit){showToast("Daily limit reached!","error"); return;}
+  let reward=type==='game'?0.01:0.005;
+  balance+=reward; dailyCount++;
+  showToast(`+${reward.toFixed(3)} USDT added!`,"success");
+  updateUI(); launchConfetti();
 }
 
-// --- Simulate Ad
 function playAd(success,fail){
-  setTimeout(()=>{Math.random()>0.05 ? success() : fail()},1000+Math.random()*2000);
+  setTimeout(()=>{Math.random()>0.05?success():fail()},1000+Math.random()*2000);
 }
 
-// --- Buttons
 watchAdBtn.addEventListener('click',()=>playAd(()=>rewardForAd('adSlot'),()=>showToast('Ad failed','error')));
-document.getElementById('claimRefBtn').addEventListener('click',()=>{
-  refCount++; balance+=0.01; updateUI(); showToast('+0.01 USDT referral bonus!','success',2000);
-});
+claimRefBtn.addEventListener('click',()=>{refCount++;balance+=0.01;updateUI();showToast('+0.01 USDT referral bonus!','success');});
 
-// --- Music Toggle Button
-const musicToggleBtn = document.createElement('button');
-musicToggleBtn.textContent="Mute/Unmute Music"; 
-musicToggleBtn.style.position="fixed";
-musicToggleBtn.style.bottom="20px"; musicToggleBtn.style.right="20px"; 
-musicToggleBtn.style.padding="10px 14px"; musicToggleBtn.style.borderRadius="12px";
-musicToggleBtn.style.background="linear-gradient(135deg,#6ee7b7,#34d399)";
-musicToggleBtn.style.color="#052014"; musicToggleBtn.style.border="none"; musicToggleBtn.style.cursor="pointer";
-musicToggleBtn.style.zIndex=9999;
-musicToggleBtn.onclick=()=>{music.muted = !music.muted};
-document.body.appendChild(musicToggleBtn);
+for(let i=1;i<=50;i++){
+  let ad=document.createElement('div');ad.className='card';ad.style.padding='12px';ad.style.cursor='pointer';
+  ad.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><div><strong>Ad Slot #${i}</strong><div class="smallMuted">Tap to watch</div></div><div class="smallMuted">+0.005</div></div>`;
+  ad.addEventListener('click',()=>playAd(()=>rewardForAd('adSlot'),()=>showToast('Ad failed','error')));
+  adsGrid.appendChild(ad);
 
-// --- Confetti
+  let game=document.createElement('div');game.className='card';game.style.padding='12px';game.style.cursor='pointer';
+  game.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><div><strong>Game ${i}</strong><div class="smallMuted">Quick play — watch ad to get reward</div></div><div><button class="btn game" style="padding:8px 10px">Play</button></div></div>`;
+  game.querySelector('button').addEventListener('click',()=>playAd(()=>rewardForAd('game'),()=>showToast('Game failed','error')));
+  gamesGrid.appendChild(game);
+}
+
+function autoScroll(grid){let pos=0;function loop(){pos+=0.5;if(pos>=grid.scrollHeight-grid.clientHeight)pos=0;grid.scrollTop=pos;requestAnimationFrame(loop);}loop();}
+autoScroll(adsGrid); autoScroll(gamesGrid);
+
 function launchConfetti(){
-  const confetti=[];
-  for(let i=0;i<100;i++){
-    confetti.push({
-      x:Math.random()*window.innerWidth,
-      y:Math.random()*window.innerHeight,
-      dx:(Math.random()-0.5)*10,
-      dy:Math.random()*-10-2,
-      color:`hsl(${Math.random()*360},100%,50%)`,
-      size:Math.random()*6+2
-    });
-  }
-  let count=0;
-  function render(){
-    confCtx.clearRect(0,0,window.innerWidth,window.innerHeight);
-    confetti.forEach(p=>{
-      p.x+=p.dx; p.y+=p.dy+0.5;
-      confCtx.fillStyle=p.color;
-      confCtx.fillRect(p.x,p.y,p.size,p.size);
-    });
-    count++; if(count<50) requestAnimationFrame(render);
-  }
-  render();
+  const confetti=[]; for(let i=0;i<100;i++){confetti.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,dx:(Math.random()-0.5)*10,dy:(Math.random()*-10-2),color:`hsl(${Math.random()*360},100%,50%)`,size:Math.random()*6+2});}
+  let count=0; function render(){confCtx.clearRect(0,0,window.innerWidth,window.innerHeight); confetti.forEach(p=>{p.x+=p.dx;p.y+=p.dy+0.5;confCtx.fillStyle=p.color;confCtx.fillRect(p.x,p.y,p.size,p.size);}); count++; if(count<50)requestAnimationFrame(render);} render();
 }
 
-// --- Particles Background
-const canvas=document.getElementById('particles'); 
-const ctx=canvas.getContext('2d'); 
-canvas.width=window.innerWidth; canvas.height=window.innerHeight;
-const particles=[]; 
-for(let i=0;i<200;i++){
-  particles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,radius:Math.random()*1.5+0.5,speedX:(Math.random()-0.5)*0.5,speedY:(Math.random()-0.5)*0.5});
-}
-function animateParticlesLoop() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    particles.forEach(p => {
-        p.x += p.speedX; p.y += p.speedY;
-        if(p.x<0) p.x=canvas.width; if(p.x>canvas.width)p.x=0;
-        if(p.y<0)p.y=canvas.height; if(p.y>canvas.height)p.y=0;
-        ctx.beginPath(); ctx.arc(p.x,p.y,p.radius,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.08)'; ctx.fill();
-    });
-    requestAnimationFrame(animateParticlesLoop);
-}
-animateParticlesLoop();
+const canvas=document.getElementById('particles'); const ctx=canvas.getContext('2d'); canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+const particles=[]; for(let i=0;i<200;i++){particles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,radius:Math.random()*1.5+0.5,speedX:(Math.random()-0.5)*0.5,speedY:(Math.random()-0.5)*0.5});}
+function animateParticles(){ctx.clearRect(0,0,canvas.width,canvas.height);particles.forEach(p=>{p.x+=p.speedX;p.y+=p.speedY;if(p.x<0)p.x=canvas.width;if(p.x>canvas.width)p.x=0;if(p.y<0)p.y=canvas.height;if(p.y>canvas.height)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,p.radius,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fill();});requestAnimationFrame(animateParticles);}
+animateParticles();
 
-// --- Handle window resize
-window.addEventListener('resize',()=>{
-    canvas.width=window.innerWidth;
-    canvas.height=window.innerHeight;
-    confettiCanvas.width=window.innerWidth;
-    confettiCanvas.height=window.innerHeight;
-});
+const musicToggle=document.createElement('button');musicToggle.textContent="Mute/Unmute Music"; 
+musicToggle.style.position="fixed";musicToggle.style.bottom="20px";musicToggle.style.right="20px"; 
+musicToggle.style.padding="10px 14px";musicToggle.style.borderRadius="12px";musicToggle.style.background="linear-gradient(135deg,#6ee7b7,#34d399)";
+musicToggle.style.color="#052014";musicToggle.style.border="none";musicToggle.style.cursor="pointer";musicToggle.style.zIndex=9999; 
+musicToggle.onclick=()=>{music.muted=!music.muted};document.body.appendChild(musicToggle);
+music.play().catch(()=>console.log("Autoplay blocked"));
 
-// --- Initialize UI
+window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight; confettiCanvas.width=window.innerWidth; confettiCanvas.height=window.innerHeight;});
+
 updateUI();
-showToast("Galaxy Jackpot — ∞× Legendary++ Loaded!", "info", 4000);
-music.play().catch(()=>{console.log("Autoplay blocked")});
+showToast("Galaxy Jackpot — ∞× Legendary++ Loaded!","info");
 })();
 </script>
 </body>
